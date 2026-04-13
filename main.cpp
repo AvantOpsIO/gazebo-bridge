@@ -265,9 +265,8 @@ int main(int argc, char **argv) {
   gst_init(&argc, &argv);
 
   gz::transport::Node node;
-  const gz::transport::Node::Subscriber sub = node.Subscribe<gz::msgs::Image>(
-      g_config.camera_topic, [](const gz::msgs::Image &img) { on_image(img); });
-  if (!static_cast<bool>(sub)) {
+  if (!node.Subscribe<gz::msgs::Image>(g_config.camera_topic,
+                                       [](const gz::msgs::Image &img) { on_image(img); })) {
     std::cerr << "Failed to subscribe to topic: " << g_config.camera_topic << "\n";
     return 1;
   }
