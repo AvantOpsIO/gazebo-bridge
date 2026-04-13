@@ -79,6 +79,46 @@ docker run --rm -e CAMERA_TOPIC=/your/topic -p 8554:8554 --network host gazebo-b
 
 `--network host` is often needed so the container shares the same gz-transport discovery as gz-sim on the host.
 
+## End-to-end test: Docker Compose (gz-sim + bridge + viewer)
+
+This repo ships a **minimal camera world** ([`worlds/test_camera.sdf`](worlds/test_camera.sdf)) and **Compose** wiring so you can validate the full path without installing gz-sim on the host.
+
+1. **Start sim + bridge** (first build can take several minutes; image pulls + `gz-harmonic` are large):
+
+   ```bash
+   docker compose up --build
+   ```
+
+   - **Sim** runs `gz sim -r -s /worlds/test_camera.sdf` (headless server).
+   - **Bridge** waits until the camera image topic exists, then listens on **RTSP** port **8554**.
+
+2. **View the stream** on your machine (host needs **ffplay** from FFmpeg):
+
+   ```bash
+   chmod +x scripts/view-stream.sh
+   ./scripts/view-stream.sh
+   ```
+
+   TCP fallback if UDP RTP is blocked:
+
+   ```bash
+   RTSP_TRANSPORT=tcp ./scripts/view-stream.sh
+   ```
+
+   Or manually:
+
+   ```bash
+   ffplay -fflags nobuffer -flags low_delay rtsp://127.0.0.1:8554/stream
+   ```
+
+**Notes**
+
+- Compose builds the bridge against **gz-transport13** to match **Gazebo Harmonic** (`gz-harmonic` in `Dockerfile.sim`). If you switch the sim image to another collection, update `GZ_TRANSPORT_DEV_PKG` / `GZ_TRANSPORT_PC_MODULE` in [`compose.yaml`](compose.yaml) to match.
+- Headless **Ogre2** rendering in Docker can fail on some hosts (GPU drivers, EGL). If the sim container exits or never becomes healthy, run gz-sim **natively** and only run the bridge container with `--network host`, or debug with `docker compose logs sim`.
+- The camera topic used in Compose is  
+  `/world/camera_sensor/model/camera/link/link/sensor/camera/image`  
+  (see comment in [`worlds/test_camera.sdf`](worlds/test_camera.sdf)).
+
 ## Behavior notes
 
 - **Timestamps:** wall-time / pipeline live mode (`do-timestamp` on `appsrc`); simulation time is not used for RTP.

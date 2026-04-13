@@ -4,6 +4,10 @@ FROM ubuntu:noble
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Pin to the gz-transport SONAME that matches your Gazebo collection (Harmonic → 13, Ionic → 14, etc.).
+ARG GZ_TRANSPORT_DEV_PKG=libgz-transport14-dev
+ARG GZ_TRANSPORT_PC_MODULE=gz-transport14
+
 # Gazebo / gz packages are on packages.osrfoundation.org (not always in default Ubuntu universe).
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -23,12 +27,12 @@ RUN apt-get update \
         libgstreamer1.0-dev \
         libgstreamer-plugins-base1.0-dev \
         libgstrtspserver-1.0-dev \
-        libgz-transport14-dev \
+        "${GZ_TRANSPORT_DEV_PKG}" \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY CMakeLists.txt main.cpp ./
-RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DGZ_TRANSPORT_PKG="${GZ_TRANSPORT_PC_MODULE}" \
     && cmake --build build -j"$(nproc)"
 
 ENV CAMERA_TOPIC=/camera/image
