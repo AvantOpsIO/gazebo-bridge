@@ -31,7 +31,7 @@ Startup configuration only (no hot reload).
 
 ## Native build (Ubuntu)
 
-Install dependencies (names vary slightly by Ubuntu / Gazebo release):
+**gz-transport** is published on [packages.osrfoundation.org](https://gazebosim.org/docs/latest/install_ubuntu/) (add the Gazebo apt repo if `libgz-transport*-dev` is not found). Then:
 
 ```bash
 sudo apt-get update

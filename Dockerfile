@@ -4,7 +4,18 @@ FROM ubuntu:noble
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Gazebo / gz packages are on packages.osrfoundation.org (not always in default Ubuntu universe).
 RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release \
+    && curl -fsSL https://packages.osrfoundation.org/gazebo.gpg \
+        -o /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] https://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" \
+        > /etc/apt/sources.list.d/gazebo-stable.list \
+    && apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
         cmake \
@@ -13,7 +24,6 @@ RUN apt-get update \
         libgstreamer-plugins-base1.0-dev \
         libgstrtspserver-1.0-dev \
         libgz-transport14-dev \
-        ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
