@@ -15,7 +15,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "gz topic -l 2>/dev/null | grep -q 'sensor/camera/image' || exit 1",
+          "gz topic -i -t /camera 2>/dev/null | grep -q 'gz.msgs.Image' || exit 1",
         ]
       interval: 5s
       timeout: 15s
@@ -30,7 +30,8 @@ services:
         GZ_TRANSPORT_DEV_PKG: libgz-transport13-dev
         GZ_TRANSPORT_PC_MODULE: gz-transport13
     environment:
-      CAMERA_TOPIC: /world/camera_sensor/model/camera/link/link/sensor/camera/image
+      # Harmonic maps <topic>camera</topic> in the world to gz-transport topic /camera (gz.msgs.Image).
+      CAMERA_TOPIC: /camera
     ports:
       - "8554:8554"
     depends_on:

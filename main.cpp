@@ -5,12 +5,14 @@
 #include <cstring>
 #include <csignal>
 #include <condition_variable>
+#include <functional>
 #include <iostream>
 #include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
 
+#include <glib-unix.h>
 #include <glib.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
@@ -265,8 +267,9 @@ int main(int argc, char **argv) {
   gst_init(&argc, &argv);
 
   gz::transport::Node node;
-  if (!node.Subscribe<gz::msgs::Image>(g_config.camera_topic,
-                                       [](const gz::msgs::Image &img) { on_image(img); })) {
+  const std::function<void(const gz::msgs::Image &)> image_cb =
+      [](const gz::msgs::Image &img) { on_image(img); };
+  if (!node.Subscribe<gz::msgs::Image>(g_config.camera_topic, image_cb)) {
     std::cerr << "Failed to subscribe to topic: " << g_config.camera_topic << "\n";
     return 1;
   }

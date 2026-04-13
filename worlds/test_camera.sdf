@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <!--
   Minimal headless-friendly world with a camera (gz-sim8 / Gazebo Harmonic style).
-  Camera image topic (full): /world/camera_sensor/model/camera/link/link/sensor/camera/image
+  In Gazebo Harmonic this camera publishes gz.msgs.Image on topic /camera (see `gz topic -l`).
   Derived from gz-sim examples (Apache-2.0): https://github.com/gazebosim/gz-sim
 -->
 <sdf version="1.6">

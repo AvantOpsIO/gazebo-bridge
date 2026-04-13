@@ -1,0 +1,12 @@
+# Reliable gz-transport + bridge on Docker Desktop (Mac): one container, one network namespace.
+# Usage: docker compose -f compose.e2e.yaml up --build
+services:
+  e2e:
+    build:
+      context: .
+      dockerfile: Dockerfile.e2e
+    ports:
+      - "8554:8554"
+    environment:
+      LIBGL_ALWAYS_SOFTWARE: "1"
+      CAMERA_TOPIC: /camera

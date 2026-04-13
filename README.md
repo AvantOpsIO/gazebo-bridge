@@ -36,9 +36,12 @@ Startup configuration only (no hot reload).
 ```bash
 sudo apt-get update
 sudo apt-get install -y build-essential cmake pkg-config \
-  libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstrtspserver-1.0-dev \
-  libgz-transport14-dev
+  libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-ugly libgstrtspserver-1.0-dev \
+  libgz-transport14-dev \
+  libcppzmq-dev
 ```
+
+If `libcppzmq-dev` is unavailable on your arch, install `libzmq3-dev` and install the header `zmq.hpp` from [cppzmq](https://github.com/zeromq/cppzmq) (see [`Dockerfile`](Dockerfile)).
 
 If CMake cannot find gz-transport, install the dev package that matches your system and pass the pkg-config module name:
 
@@ -81,7 +84,19 @@ docker run --rm -e CAMERA_TOPIC=/your/topic -p 8554:8554 --network host gazebo-b
 
 ## End-to-end test: Docker Compose (gz-sim + bridge + viewer)
 
-This repo ships a **minimal camera world** ([`worlds/test_camera.sdf`](worlds/test_camera.sdf)) and **Compose** wiring so you can validate the full path without installing gz-sim on the host.
+This repo ships a **minimal camera world** ([`worlds/test_camera.sdf`](worlds/test_camera.sdf)) and Compose files so you can validate the full path without installing gz-sim on the host.
+
+### Recommended: single container ([`compose.e2e.yaml`](compose.e2e.yaml))
+
+**gz-transport discovery often fails between two containers on Docker Desktop (Mac)**. The reliable path is **one container** running gz-sim and the bridge in the **same network namespace** ([`Dockerfile.e2e`](Dockerfile.e2e) + [`docker/e2e-entrypoint.sh`](docker/e2e-entrypoint.sh)).
+
+```bash
+docker compose -f compose.e2e.yaml up --build
+```
+
+### Two services ([`compose.yaml`](compose.yaml))
+
+On **Linux** hosts where multicast discovery works across the Compose network, you can use sim + bridge as separate services:
 
 1. **Start sim + bridge** (first build can take several minutes; image pulls + `gz-harmonic` are large):
 
@@ -113,11 +128,10 @@ This repo ships a **minimal camera world** ([`worlds/test_camera.sdf`](worlds/te
 
 **Notes**
 
-- Compose builds the bridge against **gz-transport13** to match **Gazebo Harmonic** (`gz-harmonic` in `Dockerfile.sim`). If you switch the sim image to another collection, update `GZ_TRANSPORT_DEV_PKG` / `GZ_TRANSPORT_PC_MODULE` in [`compose.yaml`](compose.yaml) to match.
+- **Harmonic** publishes this world’s camera as **`/camera`** (`gz.msgs.Image`). Use `gz topic -l` if you change the SDF.
+- Compose builds the bridge against **gz-transport13** to match **Gazebo Harmonic** (`gz-harmonic` in `Dockerfile.sim`). If you switch the sim image to another collection, update `GZ_TRANSPORT_DEV_PKG` / `GZ_TRANSPORT_PC_MODULE` in [`compose.yaml`](compose.yaml) / [`Dockerfile.e2e`](Dockerfile.e2e) to match.
 - Headless **Ogre2** rendering in Docker can fail on some hosts (GPU drivers, EGL). If the sim container exits or never becomes healthy, run gz-sim **natively** and only run the bridge container with `--network host`, or debug with `docker compose logs sim`.
-- The camera topic used in Compose is  
-  `/world/camera_sensor/model/camera/link/link/sensor/camera/image`  
-  (see comment in [`worlds/test_camera.sdf`](worlds/test_camera.sdf)).
+- The camera topic used in Compose is **`/camera`** (Harmonic maps the SDF camera topic that way; confirm with `gz topic -l` / `gz topic -i -t /camera`).
 
 ## Behavior notes
 
